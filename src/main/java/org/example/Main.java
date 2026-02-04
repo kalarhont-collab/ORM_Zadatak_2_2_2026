@@ -1,87 +1,116 @@
-/*
-Kreirati novi Java projekt koji će koristiti radne okvire Hibernate i JPA i implementirati primjer veze „1:N” s
-entitetima „Jelo” (engl. Meal) i sastojci (engl. Ingredients).
-Klasa „Meal” mora sadržavati identifikator „Long id” i naziv „String name” te listu objekata klase „Ingredient”
-te anotaciju „@OneToMany”.
-Klasa „Ingredient” mora sadržavati identifikator „Long id” i naziv „String name” i objekt klase „Meal” kojem
-pripada taj sastojak označen s anotacijama „@ManyToOne” i „@JoinColumn”.
-Kreirati i glavnu klasu koja sprema objekt klase „Meal” zajedno s nekoliko sastojaka.
-Napisati upit koji će dohvaćati podatke o svim jelima.
+package org.example;/*
+Kreirati novi Java projekt koji će sadržavati perzistentnu klasu „User” s varijablama „id” (Long), „username” (String) i
+ „email” (String) te odgovarajuću konfiguraciju u datoteci „persistence.xml”
+Kreirati novu klasu s „main” metodom koja će sadržavati metode „persistUser”, „detachUser”, „reattachUser” i „deleteUser”
+Metoda „persistUser” mora korištenjem EntityManager i EntityTransaction klasa pozivati metodu „persist” i
+perzistirati jedan primjer objekta klase „User”
+Metoda „detachUser” mora na sličan način pozvati metodu „detach”, a metoda „reattach” mora pozivom metode „merge”
+ponovno povezati odvojeni entitet
+Metodom „remove” na sličan način i obrisati objekt klase „User”
  */
-
-
-package org.example;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
-import org.example.model.Meal;
-import org.example.model.Ingredient;
-
-import java.util.List;
+import org.example.model.User1;
 
 
 public class Main {
+    private static EntityManagerFactory emf = Persistence.createEntityManagerFactory("library");
 
     public static void main(String[] args) {
 
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("library");
-        EntityManager em = emf.createEntityManager();
-        EntityTransaction tx = em.getTransaction();
+        User1 user = new User1();
+        user.setUsername("Marko");
+        user.setEmail("marko@gmail.com");
 
-        tx.begin();
+        //persist
+        persistUser(user);
 
-        Meal meal1 = new Meal();
-        meal1.setName("Hamburger");
-        em.persist(meal1);
+        //detach
+        detachUser(user);
 
-        Meal meal2 = new Meal();
-        meal2.setName("Sarma");
-        em.persist(meal2);
+        //reattach
+        user.setEmail("darko@gmail.com");
+        reattachUser(user);
 
-        Ingredient ingredient1 = new Ingredient();
-        ingredient1.setName("Junetina");
-        ingredient1.setMeal(meal1);
-        em.persist(ingredient1);
+        //delete
+        deleteUser(user);
 
-        Ingredient ingredient2 = new Ingredient();
-        ingredient2.setName("Salata");
-        ingredient2.setMeal(meal1);
-        em.persist(ingredient2);
-
-        Ingredient ingredient3 = new Ingredient();
-        ingredient3.setName("Rajčica");
-        ingredient3.setMeal(meal1);
-        em.persist(ingredient3);
-
-        Ingredient ingredient4 = new Ingredient();
-        ingredient4.setName("Glavica kupusa");
-        ingredient4.setMeal(meal2);
-        em.persist(ingredient4);
-
-        Ingredient ingredient5 = new Ingredient();
-        ingredient5.setName("Mljeveno meso");
-        ingredient5.setMeal(meal2);
-        em.persist(ingredient5);
-
-        Ingredient ingredient6 = new Ingredient();
-        ingredient6.setName("Riža");
-        ingredient6.setMeal(meal2);
-        em.persist(ingredient6);
-
-        // Dohvat jela
-        List<Meal> meals = em.createQuery("select m from Meal m", Meal.class).getResultList();
-
-        for (Meal m : meals) {
-            System.out.println("Jelo: " + m.getName());
-            for (Ingredient i : m.getIngredients()) {
-                System.out.println("Sastojak: " + i.getName());
-            }
-        }
-
-        tx.commit();
-        em.close();
+        // Zatvaranje EntityManagerFactory
         emf.close();
+    }
+
+    private static void persistUser(User1 user) {
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction transaction = em.getTransaction();
+        try {
+            transaction.begin();
+            em.persist(user);
+            transaction.commit();
+            System.out.println("User persisted: " + user);
+        } catch (Exception e) {
+            if (transaction.isActive()) transaction.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+    }
+
+    private static void detachUser(User1 user) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            User1 detachedUser = em.find(User1.class, user.getId());
+            if (detachedUser != null) {
+                em.detach(detachedUser);
+                System.out.println("User detached: " + detachedUser);
+            } else {
+                System.out.println("User not found for detach!");
+            }
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+    }
+
+    private static void reattachUser(User1 user) {
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction transaction = em.getTransaction();
+        try {
+            transaction.begin();
+            User1 reattachedUser = em.merge(user);
+            transaction.commit();
+            System.out.println("User reattached: " + reattachedUser);
+        } catch (Exception e) {
+            if (transaction.isActive()) transaction.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+    }
+
+    private static void deleteUser(User1 user) {
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction transaction = em.getTransaction();
+        try {
+            transaction.begin();
+            User1 deletedUser = em.find(User1.class, user.getId());
+            if (deletedUser != null) {
+                em.remove(deletedUser);
+                System.out.println("User removed: " + deletedUser);
+            } else {
+                System.out.println("User not found for delete!");
+            }
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction.isActive()) transaction.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
     }
 }
