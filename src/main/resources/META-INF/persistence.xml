@@ -6,7 +6,7 @@
     <!--CTRL + SHIFT + O Import dependcija-->
 
     <persistence-unit name="library" transaction-type="RESOURCE_LOCAL">
-        <class>org.example.model.User1</class>
+        <class>org.example.model.User</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver"/>

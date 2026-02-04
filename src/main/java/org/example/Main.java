@@ -13,7 +13,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
-import org.example.model.User1;
+import org.example.model.User;
 
 
 public class Main {
@@ -21,7 +21,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        User1 user = new User1();
+        User user = new User();
         user.setUsername("Marko");
         user.setEmail("marko@gmail.com");
 
@@ -42,7 +42,7 @@ public class Main {
         emf.close();
     }
 
-    private static void persistUser(User1 user) {
+    private static void persistUser(User user) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction transaction = em.getTransaction();
         try {
@@ -58,11 +58,11 @@ public class Main {
         }
     }
 
-    private static void detachUser(User1 user) {
+    private static void detachUser(User user) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
-            User1 detachedUser = em.find(User1.class, user.getId());
+            User detachedUser = em.find(User.class, user.getId());
             if (detachedUser != null) {
                 em.detach(detachedUser);
                 System.out.println("User detached: " + detachedUser);
@@ -77,12 +77,12 @@ public class Main {
         }
     }
 
-    private static void reattachUser(User1 user) {
+    private static void reattachUser(User user) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction transaction = em.getTransaction();
         try {
             transaction.begin();
-            User1 reattachedUser = em.merge(user);
+            User reattachedUser = em.merge(user);
             transaction.commit();
             System.out.println("User reattached: " + reattachedUser);
         } catch (Exception e) {
@@ -93,12 +93,12 @@ public class Main {
         }
     }
 
-    private static void deleteUser(User1 user) {
+    private static void deleteUser(User user) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction transaction = em.getTransaction();
         try {
             transaction.begin();
-            User1 deletedUser = em.find(User1.class, user.getId());
+            User deletedUser = em.find(User.class, user.getId());
             if (deletedUser != null) {
                 em.remove(deletedUser);
                 System.out.println("User removed: " + deletedUser);
